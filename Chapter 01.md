@@ -3,36 +3,29 @@
 ### 01. 티켓 판매 어플리케이션 구현하기
 
 소극장 어플리케이션. 
-초대장을 받은 관람객과 그렇지 않은 관람객
+초대장을 받은 관람객과 그렇지 않은 관람객이 존재. 
 
-``` java
-// 초대장
-public class Invitation {
-    private LocalDateTime when;
+``` swift
+class Invitation {
+    private(set) var when: Date?
 }
+
 ```
 
-``` java
-// 티켓
-public class Ticket {
-    private Long fee;
-    public Long getFee() {
-        return fee;
-    }
+
+``` swift
+class Ticket {
+    private(set) var fee: Int = 8500
 }
 ```
 
 관람객 객체 
-``` java
-public class Audience {
-    private Bag bag;
-
-    public Audience(Bag bag) {
-        this.bag = bag;
-    }
-}
-    public Bag getBag() {
-        return bag;
+``` swift
+class Audience {
+    private(set) var bag: Bag
+    
+    init(bag: Bag) {
+        self.bag = bag
     }
 }
 ```
@@ -42,82 +35,78 @@ public class Audience {
 초대장을 받은 관람객 : 초대장 + 현금
 초대장을 받지 않은 관람객 : 현금
 
-``` java
+``` swift
 
-public class Bag {
-    private Long amount;
-    private Invitation invitation;
-    private Ticket ticket;
-
-    public Bag(long amount) {
-        this(null, amount);
+class Bag {
+    private var amount: Int = 0
+    private var invitation: Invitation?
+    private(set) var ticket: Ticket?
+    
+    convenience init(amount: Int) {
+        self.init(amount: amount, invitation: nil)
     }
-
-    public Bag(Invitation invitation, long amount) {
-        this.invitation = invitation;
-        this.amount = amount;
+    
+    init(amount: Int, invitation: Invitation?) {
+        self.amount = amount
+        self.invitation = invitation
     }
-
-    public boolean hasInvitation() {
-        return invitation != null;
+    
+    func hasTicket() -> Bool {
+        return ticket != nil
     }
-
-    public boolean hasTicket() {
-        return ticket != null;
+    
+    func hasInvitation() -> Bool {
+        return invitation != nil
     }
-
-    public void setTicket(Ticket ticket) {
-        this.ticket = ticket;
+    
+    func plusAmount(amount: Int) {
+        self.amount += amount
     }
-
-    public void minusAmount(Long amount) {
-        this.amount -= amount;
+    
+    func minusAmount(amount: Int) {
+        self.amount -= amount
     }
-
-    public void plusAmount(Long amount) {
-        this.amount += amount;
+    
+    func setTicket(ticket: Ticket) {
+        self.ticket = ticket
     }
-}
-	
+    
+}	
 ```
 
 매표소 클래스 
 
-``` java
-public class TicketOffice {
-    private Long amount;
-    private List<Ticket> tickets = new ArrayList<>();
-
-    public TicketOffice(Long amount, Ticket ... tickets) {
-        this.amount = amount;
-        this.tickets.addAll(Arrays.asList(tickets));
+``` swift
+class TicketOffice {
+    private(set) var amount: Int
+    private(set) var tickets: [Ticket]
+    
+    init(amount: Int, tickets: [Ticket]) {
+        self.amount = amount
+        self.tickets = tickets
     }
-
-    public Ticket getTicket() {
-        return tickets.remove(0);
+    
+    func getTicket() -> Ticket? {
+        return tickets.first
     }
-
-    public void minusAmount(Long amount) {
-        this.amount -= amount;
+    
+    func plusAmount(amount: Int) {
+        self.amount += amount
     }
-
-    public void plusAmount(Long amount) {
-        this.amount += amount;
+    
+    func minusAmount(amount: Int) {
+        self.amount -= amount
     }
 }
 ```
 
 티켓 판매원 클래스
-``` java
-public class TicketSeller {
-    private TicketOffice ticketOffice;
-
-    public TicketSeller(TicketOffice ticketOffice) {
-        this.ticketOffice = ticketOffice;
-    }
-
-    public TicketOffice getTicketOffice() {
-        return ticketOffice;
+``` swift
+class TicketSeller {
+    private(set) var ticketOffice: TicketOffice
+    
+    init(ticketOffice: TicketOffice) {
+        self.ticketOffice = ticketOffice
     }
 }
 
@@ -125,23 +114,25 @@ public class TicketSeller {
 ```
 
 영화관 클래스
-``` java
-public class Theater {
-    private TicketSeller ticketSeller;
-
-    public Theater(TicketSeller ticketSeller) {
-        this.ticketSeller = ticketSeller;
+``` swift
+class Theater {
+    private(set) var ticketSeller: TicketSeller
+    
+    init(ticketSeller: TicketSeller) {
+        self.ticketSeller = ticketSeller
     }
-
-    public void enter(Audience audience) {
-        if (audience.getBag().hasInvitation()) {
-            Ticket ticket = ticketSeller.getTicketOffice().getTicket();
-            audience.getBag().setTicket(ticket);
+    
+    func enter(audience: Audience) {
+        if audience.bag.hasInvitation() {
+            guard let ticket = ticketSeller.ticketOffice.getTicket() else { return }
+            audience.bag.minusAmount(amount: ticket.fee)
+            ticketSeller.ticketOffice.plusAmount(amount: ticket.fee)
+            audience.bag.setTicket(ticket: ticket)
         } else {
-            Ticket ticket = ticketSeller.getTicketOffice().getTicket();
-            audience.getBag().minusAmount(ticket.getFee());
-            ticketSeller.getTicketOffice().plusAmount(ticket.getFee());
-            audience.getBag().setTicket(ticket);
+            guard let ticket = ticketSeller.ticketOffice.getTicket() else { return }
+            audience.bag.minusAmount(amount: ticket.fee)
+            ticketSeller.ticketOffice.plusAmount(amount: ticket.fee)
+            audience.bag.setTicket(ticket: ticket)
         }
     }
 }
